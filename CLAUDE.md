@@ -34,3 +34,77 @@ Dependency rules enforced:
 - application cannot import adapters or infrastructure
 - ports cannot import application, adapters, or infrastructure
 - inboundAdapters cannot import outboundAdapters
+
+---
+
+## Product Specification (Target State)
+
+### Target Programmatic API
+
+```typescript
+import { HexagonalAnalyzer, DiagramGenerator } from 'hexarch-gen';
+
+const analyzer = new HexagonalAnalyzer('./src');
+const analysis = await analyzer.analyze();
+const violations = analysis.validateRules();
+
+const generator = new DiagramGenerator(analysis);
+const svgDiagram = await generator.generateSVG();
+const d2Code = await generator.generateD2();
+await generator.export('./output/diagram.svg', 'svg');
+```
+
+### Target CLI
+
+```bash
+hexarch-gen analyze ./src --format svg,d2,json --output-dir ./diagrams
+hexarch-gen validate ./src --strict
+hexarch-gen watch ./src --format svg   # Watch mode (not implemented)
+```
+
+### Target Output Formats
+
+| Format | Status | Description |
+|--------|--------|-------------|
+| D2 | ✅ Implemented | Text-based diagram language |
+| DOT | ✅ Implemented | GraphViz format |
+| JSON | ✅ Implemented | Analysis data (basic) |
+| SVG | ❌ Not implemented | Interactive, clickable nodes |
+| PlantUML | ❌ Not implemented | Component diagrams |
+
+### Target Configuration Schema (hexarch.config.json)
+
+```json
+{
+  "sourceRoot": "./src",
+  "layerDefinitions": {
+    "domain": { "paths": ["src/domain/**"], "markers": ["@hexagonal domain"] },
+    "ports": { "paths": ["src/domain/ports/**"], "markers": ["@hexagonal port"] },
+    "inboundAdapters": { "paths": ["src/adapters/in/**"], "markers": ["Controller"] },
+    "outboundAdapters": { "paths": ["src/adapters/out/**"], "markers": ["Repository"] }
+  },
+  "rules": {
+    "domainIsolation": true,
+    "noCyclicDependencies": true,
+    "allowedImportsMatrix": { "domain": [], "application": ["domain", "ports"] }
+  },
+  "output": { "formats": ["svg", "d2"], "theme": "dark" }
+}
+```
+
+### Unimplemented Features
+
+- **Programmatic API exports**: No `HexagonalAnalyzer`/`DiagramGenerator` classes exported
+- **SVG generation**: Currently outputs DOT only; user must run `dot -Tsvg` manually
+- **PlantUML output**
+- **Watch mode**: `hexarch-gen watch` command
+- **Port sub-classification**: Distinguish inbound vs outbound ports
+- **Rich JSON metrics**: modularity, coupling scores, adapter types
+- **Interactive SVG**: Clickable nodes linking to source files, tooltips
+- **Incremental analysis/caching**: For watch mode performance
+
+### Detection Strategy (3-tier)
+
+1. **Path patterns** (primary): `domain/`, `application/`, `adapters/in/`, etc.
+2. **JSDoc markers** (secondary): `/** @hexagonal domain-entity */`
+3. **Dependency analysis** (tertiary, not implemented): Detect interface implementations, classes with no external deps
