@@ -1,0 +1,18 @@
+{
+  "name": "hexarch-gen",
+  "version": "1.0.0",
+  "module": "index.ts",
+  "type": "module",
+  "bin": { "hexarch-gen": "./index.ts" },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "commander": "^14.0.2",
+    "dependency-cruiser": "^17.3.6"
+  }
+}
