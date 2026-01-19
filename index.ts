@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { cruise, type ICruiseResult, type IModule } from "dependency-cruiser";
+import { cruise, type IReporterOutput, type IModule } from "dependency-cruiser";
 import { program } from "commander";
 import chalk from "chalk";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
@@ -109,13 +109,13 @@ function classifyModule(mod: IModule, srcRoot: string, config: Config): Layer {
 // Analysis
 async function analyze(srcPath: string, config: Config): Promise<Analysis> {
   const tsConfigPath = join(dirname(srcPath), "tsconfig.json");
-  const cruiseResult = await cruise([srcPath], {
+  const reporterOutput = await cruise([srcPath], {
     tsPreCompilationDeps: true,
     ...(existsSync(tsConfigPath) && { tsConfig: { fileName: tsConfigPath } }),
-  }) as ICruiseResult;
+  }) as IReporterOutput;
 
-  const output = cruiseResult.output as { modules: IModule[] };
-  const modules: ClassifiedModule[] = output.modules.map((mod) => ({
+  const cruiseResult = reporterOutput.output as { modules: IModule[] };
+  const modules: ClassifiedModule[] = cruiseResult.modules.map((mod) => ({
     source: mod.source,
     layer: classifyModule(mod, srcPath, config),
     dependencies: (mod.dependencies || [])
